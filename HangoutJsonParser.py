@@ -1,7 +1,7 @@
 import json
 
 # location of Hangouts Json file obtained from Google Takeout
-with open('/home/adrish/Documents/python codes/chatbot/Hangouts.json', 'r') as f:
+with open('/path/to/JSON/data/file.json', 'r') as f:
     jsonData = json.load(f)
 
 simpleJson = []
