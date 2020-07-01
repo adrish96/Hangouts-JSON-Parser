@@ -1,7 +1,7 @@
 import json
 
 # location of Hangouts Json file obtained from Google Takeout
-with open('/path/to/JSON/data/file.json', 'r') as f:
+with open('/path/to/JSON/data/file.json', 'r', encoding='utf-8') as f:
     jsonData = json.load(f)
 
 simpleJson = []
@@ -79,5 +79,5 @@ def chatName(i):
 
 if __name__ == '__main__':
     parseData()
-    with open("clean_hangoutsData.json", "w") as write_file:
+    with open("clean_hangoutsData.json", "w", encoding="utf-8") as write_file:
         json.dump(simpleJson, write_file, indent=4)
