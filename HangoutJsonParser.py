@@ -1,11 +1,5 @@
-import json
-
-# location of Hangouts Json file obtained from Google Takeout
-with open('/path/to/JSON/data/file.json', 'r', encoding='utf-8') as f:
-    jsonData = json.load(f)
-
-simpleJson = []
-
+#!/usr/bin/python
+import argparse, json, os
 
 def parseData():
     for i in range(0, len(jsonData['conversations'])):
@@ -17,8 +11,7 @@ def parseData():
         for j in range(0, len(jsonData['conversations'][i]['events'])):
             message = {}
             message['sender'] = {}
-            message['sender']['name'] = getName(
-                jsonData['conversations'][i]['events'][j]['sender_id']['gaia_id'], conversation['participants'])
+            message['sender']['name'] = getName(jsonData['conversations'][i]['events'][j]['sender_id']['gaia_id'], conversation['participants'])
             message['sender']['id'] = jsonData['conversations'][i]['events'][j]['sender_id']['gaia_id']
             message['unixtime'] = (int(jsonData['conversations'][i]
                                        ['events'][j]['timestamp']))/1000000
@@ -57,9 +50,9 @@ def getParticipants(index):
 
 
 def getName(id, participants):
-    for i in range(0, len(participants)):
-        if id == participants[i]['id']:
-            return participants[i]['name']
+    for p in participants:
+        if id == p['id']:
+            return p['name']
     return id
 
 
@@ -76,8 +69,13 @@ def chatName(i):
     name = participants[index]
     return name
 
-
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('INPUT_JSON_PATH', help='Path location of Hangouts.json file obtained from Google Takeout.')
+    parser.add_argument('OUTPUT_DIRECTORY', help='Path to write output files.')
+    args = parser.parse_args()
+
+    jsonData = json.load(open(args.INPUT_JSON_PATH, 'r', encoding='utf-8'))
+    simpleJson = []
     parseData()
-    with open("clean_hangoutsData.json", "w", encoding="utf-8") as write_file:
-        json.dump(simpleJson, write_file, indent=4)
+    json.dump(simpleJson, open(os.path.join(args.OUTPUT_DIRECTORY, 'clean_hangoutsData.json'), 'w', encoding='utf-8'), indent=4)
