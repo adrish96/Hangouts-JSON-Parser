@@ -31,10 +31,11 @@ def parseData():
                     # if it's a normal hangouts message
                     content = ""
                     for segment in event['chat_message']['message_content']['segment']:
-                        if segment['type'] == "TEXT":
+                        if segment['type'] in ('TEXT','LINK'):
                             content = content + segment['text']
-                        elif segment['type'] == "LINK":
-                            content = content + segment['text']
+                        elif segment['type'] == 'LINE_BREAK':
+                            content += '\n'
+                        else: raise segment
                     message['content'] = content
 
             conversation['messages'].append(message)
