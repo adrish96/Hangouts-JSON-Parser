@@ -5,7 +5,7 @@ def parseData():
     for i in range(0, len(jsonData['conversations'])):
         conversation = {}
         conversation['chatName'] = ""
-        conversation['participants'] = getParticipants(i)
+        conversation['participants'] = getParticipants(jsonData['conversations'][i]['conversation']['conversation']['participant_data'])
         conversation['messages'] = []
 
         for event in jsonData['conversations'][i]['events']:
@@ -33,32 +33,26 @@ def parseData():
         simpleJson[i]['chatName'] = chatName(i)
 
 
-def getParticipants(index):
-    participants = []
-    for i in range(0, len(jsonData['conversations'][index]['conversation']['conversation']['participant_data'])):
-        person = {}
-        person['id'] = jsonData['conversations'][index]['conversation']['conversation']['participant_data'][i]['id']['gaia_id']
-        if 'fallback_name' in jsonData['conversations'][index]['conversation']['conversation']['participant_data'][i]:
-            person['name'] = jsonData['conversations'][index]['conversation']['conversation']['participant_data'][i]['fallback_name']
-        else:
-            person['name'] = jsonData['conversations'][index]['conversation']['conversation']['participant_data'][i]['id']['gaia_id']
-        participants.append(person)
-    return participants
+def getParticipants(participant_data):
+    return [{
+        'id': participant['id']['gaia_id'],
+        'name': participant.get('fallback_name', participant['id']['gaia_id'])
+    } for participant in participant_data]
 
 
-def getName(id, participants):
+def getName(pid, participants):
     for p in participants:
-        if id == p['id']:
+        if pid == p['id']:
             return p['name']
-    return id
+    return pid
 
 
 def chatName(i):
     if (('name' in jsonData['conversations'][i]['conversation']['conversation'])and(jsonData['conversations'][i]['conversation']['conversation']['name'] != "")):
         return jsonData['conversations'][i]['conversation']['conversation']['name']
-    for part in simpleJson[i]['participants']:
-        if part['id'] == jsonData['conversations'][i]['conversation']['conversation']['self_conversation_state']['self_read_state']['participant_id']['gaia_id']:
-            return part['name']
+    for participant in simpleJson[i]['participants']:
+        if participant['id'] == jsonData['conversations'][i]['conversation']['conversation']['self_conversation_state']['self_read_state']['participant_id']['gaia_id']:
+            return participant['name']
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
