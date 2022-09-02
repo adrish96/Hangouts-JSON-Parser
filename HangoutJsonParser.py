@@ -5,7 +5,14 @@ def parseData():
     for i in range(0, len(jsonData['conversations'])):
         conversation = {}
         conversation['chatName'] = ""
-        conversation['participants'] = getParticipants(jsonData['conversations'][i]['conversation']['conversation']['participant_data'])
+        conversation['participants'] = [
+            {
+                'id': participant['id']['gaia_id'],
+                'name': participant.get('fallback_name', participant['id']['gaia_id'])
+            }
+            for participant in
+            jsonData['conversations'][i]['conversation']['conversation']['participant_data']
+        ]
         conversation['messages'] = []
 
         for event in jsonData['conversations'][i]['events']:
@@ -32,20 +39,11 @@ def parseData():
         simpleJson.append(conversation)
         simpleJson[i]['chatName'] = chatName(i)
 
-
-def getParticipants(participant_data):
-    return [{
-        'id': participant['id']['gaia_id'],
-        'name': participant.get('fallback_name', participant['id']['gaia_id'])
-    } for participant in participant_data]
-
-
 def getName(pid, participants):
     for p in participants:
         if pid == p['id']:
             return p['name']
     return pid
-
 
 def chatName(i):
     if (('name' in jsonData['conversations'][i]['conversation']['conversation'])and(jsonData['conversations'][i]['conversation']['conversation']['name'] != "")):
