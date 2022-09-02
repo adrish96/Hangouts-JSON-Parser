@@ -8,26 +8,23 @@ def parseData():
         conversation['participants'] = getParticipants(i)
         conversation['messages'] = []
 
-        for j in range(0, len(jsonData['conversations'][i]['events'])):
+        for event in jsonData['conversations'][i]['events']:
             message = {}
             message['sender'] = {}
-            message['sender']['name'] = getName(jsonData['conversations'][i]['events'][j]['sender_id']['gaia_id'], conversation['participants'])
-            message['sender']['id'] = jsonData['conversations'][i]['events'][j]['sender_id']['gaia_id']
-            message['unixtime'] = (int(jsonData['conversations'][i]
-                                       ['events'][j]['timestamp']))/1000000
+            message['sender']['name'] = getName(event['sender_id']['gaia_id'], conversation['participants'])
+            message['sender']['id'] = event['sender_id']['gaia_id']
+            message['unixtime'] = (int(event['timestamp']))/1000000
 
-            if 'chat_message' in jsonData['conversations'][i]['events'][j]:
+            if 'chat_message' in event:
                 # if it's a message(normal hangouts, image...)
-                if 'segment' in jsonData['conversations'][i]['events'][j]['chat_message']['message_content']:
+                if 'segment' in event['chat_message']['message_content']:
                     # if it's a normal hangouts message
                     content = ""
-                    for k in range(0, len(jsonData['conversations'][i]['events'][j]['chat_message']['message_content']['segment'])):
-                        if jsonData['conversations'][i]['events'][j]['chat_message']['message_content']['segment'][k]['type'] == "TEXT":
-                            content = content + \
-                                jsonData['conversations'][i]['events'][j]['chat_message']['message_content']['segment'][k]['text']
-                        elif jsonData['conversations'][i]['events'][j]['chat_message']['message_content']['segment'][k]['type'] == "LINK":
-                            content = content + \
-                                jsonData['conversations'][i]['events'][j]['chat_message']['message_content']['segment'][k]['text']
+                    for k in range(0, len(event['chat_message']['message_content']['segment'])):
+                        if event['chat_message']['message_content']['segment'][k]['type'] == "TEXT":
+                            content = content + event['chat_message']['message_content']['segment'][k]['text']
+                        elif event['chat_message']['message_content']['segment'][k]['type'] == "LINK":
+                            content = content + event['chat_message']['message_content']['segment'][k]['text']
                     message['content'] = content
 
             conversation['messages'].append(message)
@@ -59,15 +56,9 @@ def getName(id, participants):
 def chatName(i):
     if (('name' in jsonData['conversations'][i]['conversation']['conversation'])and(jsonData['conversations'][i]['conversation']['conversation']['name'] != "")):
         return jsonData['conversations'][i]['conversation']['conversation']['name']
-    participants = []
-    index = 0
-    for k in range(0, len(simpleJson[i]['participants'])):
-        participants.append(simpleJson[i]['participants'][k]['name'])
-        if simpleJson[i]['participants'][k]['id'] == jsonData['conversations'][i]['conversation']['conversation']['self_conversation_state']['self_read_state']['participant_id']['gaia_id']:
-            index = k
-            break
-    name = participants[index]
-    return name
+    for part in simpleJson[i]['participants']:
+        if part['id'] == jsonData['conversations'][i]['conversation']['conversation']['self_conversation_state']['self_read_state']['participant_id']['gaia_id']:
+            return part['name']
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
