@@ -17,22 +17,24 @@ def parseData():
         }
 
         for event in orig_conv['events']:
-            message = {}
-            message['sender'] = {}
-            message['sender']['name'] = getName(event['sender_id']['gaia_id'], conversation['participants'])
-            message['sender']['id'] = event['sender_id']['gaia_id']
-            message['unixtime'] = (int(event['timestamp']))/1000000
+            message = {
+                'sender': {
+                    'name': getName(event['sender_id']['gaia_id'], conversation['participants']),
+                    'id':   event['sender_id']['gaia_id']
+                },
+                'unixtime': int(event['timestamp'])/1000000
+            }
 
             if 'chat_message' in event:
                 # if it's a message(normal hangouts, image...)
                 if 'segment' in event['chat_message']['message_content']:
                     # if it's a normal hangouts message
                     content = ""
-                    for k in range(0, len(event['chat_message']['message_content']['segment'])):
-                        if event['chat_message']['message_content']['segment'][k]['type'] == "TEXT":
-                            content = content + event['chat_message']['message_content']['segment'][k]['text']
-                        elif event['chat_message']['message_content']['segment'][k]['type'] == "LINK":
-                            content = content + event['chat_message']['message_content']['segment'][k]['text']
+                    for segment in event['chat_message']['message_content']['segment']:
+                        if segment['type'] == "TEXT":
+                            content = content + segment['text']
+                        elif segment['type'] == "LINK":
+                            content = content + segment['text']
                     message['content'] = content
 
             conversation['messages'].append(message)
