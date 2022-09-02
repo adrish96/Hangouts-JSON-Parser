@@ -2,20 +2,21 @@
 import argparse, json, os
 
 def parseData():
-    for i in range(0, len(jsonData['conversations'])):
-        conversation = {}
-        conversation['chatName'] = ""
-        conversation['participants'] = [
-            {
-                'id': participant['id']['gaia_id'],
-                'name': participant.get('fallback_name', participant['id']['gaia_id'])
-            }
-            for participant in
-            jsonData['conversations'][i]['conversation']['conversation']['participant_data']
-        ]
-        conversation['messages'] = []
+    for orig_conv in jsonData['conversations']:
+        conversation = {
+            'chatName': '',
+            'participants': [
+                {
+                    'id': participant['id']['gaia_id'],
+                    'name': participant.get('fallback_name', participant['id']['gaia_id'])
+                }
+                for participant in
+                orig_conv['conversation']['conversation']['participant_data']
+            ],
+            'messages': []
+        }
 
-        for event in jsonData['conversations'][i]['events']:
+        for event in orig_conv['events']:
             message = {}
             message['sender'] = {}
             message['sender']['name'] = getName(event['sender_id']['gaia_id'], conversation['participants'])
@@ -36,8 +37,8 @@ def parseData():
 
             conversation['messages'].append(message)
 
+        conversation['chatName'] = chatName(orig_conv, conversation['participants'])
         simpleJson.append(conversation)
-        simpleJson[i]['chatName'] = chatName(i)
 
 def getName(pid, participants):
     for p in participants:
@@ -45,11 +46,11 @@ def getName(pid, participants):
             return p['name']
     return pid
 
-def chatName(i):
-    if (('name' in jsonData['conversations'][i]['conversation']['conversation'])and(jsonData['conversations'][i]['conversation']['conversation']['name'] != "")):
-        return jsonData['conversations'][i]['conversation']['conversation']['name']
-    for participant in simpleJson[i]['participants']:
-        if participant['id'] == jsonData['conversations'][i]['conversation']['conversation']['self_conversation_state']['self_read_state']['participant_id']['gaia_id']:
+def chatName(orig_conv, participants):
+    if (('name' in orig_conv['conversation']['conversation']) and (orig_conv['conversation']['conversation']['name'] != "")):
+        return orig_conv['conversation']['conversation']['name']
+    for participant in participants:
+        if participant['id'] == orig_conv['conversation']['conversation']['self_conversation_state']['self_read_state']['participant_id']['gaia_id']:
             return participant['name']
 
 if __name__ == '__main__':
