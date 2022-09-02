@@ -1,5 +1,5 @@
 #!/usr/bin/python
-import argparse, json, os
+import argparse, datetime, hashlib, json, os
 
 def parseData():
     for orig_conv in jsonData['conversations']:
@@ -65,3 +65,10 @@ if __name__ == '__main__':
     simpleJson = []
     parseData()
     json.dump(simpleJson, open(os.path.join(args.OUTPUT_DIRECTORY, 'clean_hangoutsData.json'), 'w', encoding='utf-8'), indent=4)
+    for chat in simpleJson:
+        filename = ', '.join(i['name'] for i in chat['participants'])+'.txt'
+        if len(filename) > os.statvfs(args.OUTPUT_DIRECTORY).f_namemax:
+            filename = hashlib.sha256(filename.encode('ascii')).hexdigest()+'.txt'
+        with open(os.path.join(args.OUTPUT_DIRECTORY, filename), 'w') as outtext:
+            for msg in chat['messages']:
+                outtext.write(datetime.datetime.fromtimestamp(msg['unixtime']).strftime('%Y-%m-%d %H:%M:%S')+' '+msg['sender']['name']+': '+msg.get('content','')+'\n')
