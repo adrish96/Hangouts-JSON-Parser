@@ -49,7 +49,7 @@ def parseData():
 
             conversation['messages'].append({
                 'sender': {
-                    'name': getName(event['sender_id']['gaia_id'], conversation['participants']),
+                    'name': getName(event['sender_id'], conversation['participants']),
                     'id':   event['sender_id']['gaia_id']
                 },
                 'unixtime': int(event['timestamp'])/1000000,
@@ -59,11 +59,12 @@ def parseData():
         conversation['chatName'] = chatName(orig_conv, conversation['participants'])
         simpleJson.append(conversation)
 
-def getName(pid, participants):
+def getName(user, participants):
+    assert user['gaia_id'] == user['chat_id']
     for p in participants:
-        if pid == p['id']:
+        if user['gaia_id'] == p['id']:
             return p['name']
-    return pid
+    return user['gaia_id']
 
 def chatName(orig_conv, participants):
     if (('name' in orig_conv['conversation']['conversation']) and (orig_conv['conversation']['conversation']['name'] != "")):
