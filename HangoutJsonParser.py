@@ -47,7 +47,7 @@ def parseData():
                         assert event['membership_change'] == {}
                         return ret
                     case 'GROUP_LINK_SHARING_MODIFICATION':
-                        return None # TODO
+                        return event['event_type']+' '+repr( event['group_link_sharing_modification'])
                     case 'RENAME_CONVERSATION':
                         return None # TODO
                     case _: raise Exception('unhandled event type '+event['event_type'])
