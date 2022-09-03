@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3 -Bubb
 import argparse, datetime, hashlib, json, os
 
 def parseData():
@@ -101,10 +101,10 @@ if __name__ == '__main__':
     parser.add_argument('OUTPUT_DIRECTORY', help='Path to write output files.')
     args = parser.parse_args()
 
-    jsonData = json.load(open(args.INPUT_JSON_PATH, 'r', encoding='utf-8'))
+    jsonData = json.load(open(args.INPUT_JSON_PATH, 'r'))
     simpleJson = []
     parseData()
-    json.dump(simpleJson, open(os.path.join(args.OUTPUT_DIRECTORY, 'clean_hangoutsData.json'), 'w', encoding='utf-8'), indent=4)
+    json.dump(simpleJson, open(os.path.join(args.OUTPUT_DIRECTORY, 'clean_hangoutsData.json'), 'w'), indent=4)
     for chat in simpleJson:
         filename = ', '.join(getName(i['id'],chat) for i in chat['participants'])+'.txt'
         if len(filename) > os.statvfs(args.OUTPUT_DIRECTORY).f_namemax:
