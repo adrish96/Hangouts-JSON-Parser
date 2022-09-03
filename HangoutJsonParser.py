@@ -49,7 +49,7 @@ def parseData():
                     case 'GROUP_LINK_SHARING_MODIFICATION':
                         return event['event_type']+' '+repr( event['group_link_sharing_modification'])
                     case 'RENAME_CONVERSATION':
-                        return None # TODO
+                        return event['event_type']+' '+repr(event['conversation_rename'])
                     case _: raise Exception('unhandled event type '+event['event_type'])
 
             conversation['messages'].append({
