@@ -2,13 +2,22 @@
 import argparse, datetime, hashlib, json, os
 
 def parseData():
+    global gaia_to_name
+    # First pass just to collect names, to deal with issue in the Hangouts.json, where some conversations lack a name for a user, when others show the name correctly.
+    gaia_to_name = {}
+    for orig_conv in jsonData['conversations']:
+        for participant in orig_conv['conversation']['conversation']['participant_data']:
+            assert participant['id']['gaia_id'] == participant['id']['chat_id']
+            if 'fallback_name' in participant:
+                gaia_to_name[participant['id']['gaia_id']] = participant['fallback_name']
+
     for orig_conv in jsonData['conversations']:
         conversation = {
             'chatName': '',
             'participants': [
                 {
                     'id': participant['id']['gaia_id'],
-                    'name': participant.get('fallback_name', participant['id']['gaia_id'])
+                    'name': participant.get('fallback_name')
                 }
                 for participant in
                 orig_conv['conversation']['conversation']['participant_data']
@@ -49,7 +58,7 @@ def parseData():
                     case 'ADD_USER'|'REMOVE_USER':
                         ret = (
                             event['event_type']+' '+event['membership_change'].pop('type')+' '+event['membership_change'].pop('leave_reason')+' '+
-                            ' '.join(repr(getName(i, conversation['participants'])) for i in event['membership_change'].pop('participant_id'))
+                            ' '.join(repr(getName(i['gaia_id'],conversation)) for i in event['membership_change'].pop('participant_id'))
                         )
                         assert event['membership_change'] == {}
                         return ret
@@ -61,7 +70,7 @@ def parseData():
 
             conversation['messages'].append({
                 'sender': {
-                    'name': getName(event['sender_id'], conversation['participants']),
+                    'name': getName(event['sender_id']['gaia_id'],conversation),
                     'id':   event['sender_id']['gaia_id']
                 },
                 'unixtime': int(event['timestamp'])/1000000,
@@ -71,12 +80,13 @@ def parseData():
         conversation['chatName'] = chatName(orig_conv, conversation['participants'])
         simpleJson.append(conversation)
 
-def getName(user, participants):
-    assert user['gaia_id'] == user['chat_id']
-    for p in participants:
-        if user['gaia_id'] == p['id']:
+def getName(user_id, conversation):
+    global gaia_to_name
+    # First use the locally defined one if available.
+    for p in conversation['participants']:
+        if user_id == p['id'] and p['name'] != None:
             return p['name']
-    return user['gaia_id']
+    return gaia_to_name.get(user_id, user_id) # Fall back to global name, then to no name at all just ID.
 
 def chatName(orig_conv, participants):
     if (('name' in orig_conv['conversation']['conversation']) and (orig_conv['conversation']['conversation']['name'] != "")):
@@ -96,7 +106,7 @@ if __name__ == '__main__':
     parseData()
     json.dump(simpleJson, open(os.path.join(args.OUTPUT_DIRECTORY, 'clean_hangoutsData.json'), 'w', encoding='utf-8'), indent=4)
     for chat in simpleJson:
-        filename = ', '.join(i['name'] for i in chat['participants'])+'.txt'
+        filename = ', '.join(getName(i['id'],chat) for i in chat['participants'])+'.txt'
         if len(filename) > os.statvfs(args.OUTPUT_DIRECTORY).f_namemax:
             filename = hashlib.sha256(filename.encode('ascii')).hexdigest()+'.txt'
         with open(os.path.join(args.OUTPUT_DIRECTORY, filename), 'w') as outtext:
