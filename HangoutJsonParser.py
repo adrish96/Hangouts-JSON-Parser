@@ -17,28 +17,44 @@ def parseData():
         }
 
         for event in orig_conv['events']:
-            message = {
+            def get_readable_content(event):
+                match event['event_type']:
+                    case 'REGULAR_CHAT_MESSAGE':
+                        content = None
+                        # if it's a message(normal hangouts, image...)
+                        for msg_k,msg_v in event['chat_message']['message_content'].items():
+                            match msg_k:
+                                case 'segment': # if it's a normal hangouts message
+                                    if content == None: content = ''
+                                    for segment in msg_v:
+                                        match segment['type']:
+                                            case 'TEXT'|'LINK':
+                                                content += segment['text']
+                                            case 'LINE_BREAK':
+                                                content += '\n'
+                                            case _: raise segment
+                                case 'attachment':
+                                    pass # TODO
+                                case _: raise msg_k
+                        return content
+                    case 'HANGOUT_EVENT':
+                        return None # TODO
+                    case 'ADD_USER'|'REMOVE_USER':
+                        return None # TODO
+                    case 'GROUP_LINK_SHARING_MODIFICATION':
+                        return None # TODO
+                    case 'RENAME_CONVERSATION':
+                        return None # TODO
+                    case _: raise Exception('unhandled event type '+event['event_type'])
+
+            conversation['messages'].append({
                 'sender': {
                     'name': getName(event['sender_id']['gaia_id'], conversation['participants']),
                     'id':   event['sender_id']['gaia_id']
                 },
-                'unixtime': int(event['timestamp'])/1000000
-            }
-
-            if 'chat_message' in event:
-                # if it's a message(normal hangouts, image...)
-                if 'segment' in event['chat_message']['message_content']:
-                    # if it's a normal hangouts message
-                    content = ""
-                    for segment in event['chat_message']['message_content']['segment']:
-                        if segment['type'] in ('TEXT','LINK'):
-                            content = content + segment['text']
-                        elif segment['type'] == 'LINE_BREAK':
-                            content += '\n'
-                        else: raise segment
-                    message['content'] = content
-
-            conversation['messages'].append(message)
+                'unixtime': int(event['timestamp'])/1000000,
+                **({'content':_} if (_:=get_readable_content(event)) != None else {})
+            })
 
         conversation['chatName'] = chatName(orig_conv, conversation['participants'])
         simpleJson.append(conversation)
