@@ -20,12 +20,11 @@ def parseData():
             def get_readable_content(event):
                 match event['event_type']:
                     case 'REGULAR_CHAT_MESSAGE':
-                        content = None
+                        content = ''
                         # if it's a message(normal hangouts, image...)
                         for msg_k,msg_v in event['chat_message']['message_content'].items():
                             match msg_k:
                                 case 'segment': # if it's a normal hangouts message
-                                    if content == None: content = ''
                                     for segment in msg_v:
                                         match segment['type']:
                                             case 'TEXT'|'LINK':
@@ -34,7 +33,15 @@ def parseData():
                                                 content += '\n'
                                             case _: raise segment
                                 case 'attachment':
-                                    pass # TODO
+                                    for att in msg_v:
+                                        match att['embed_item']['type']:
+                                            case ['PLUS_PHOTO']:
+                                                content += ' [attachment '+att['embed_item']['plus_photo']['url']+' ]'
+                                            case ['PLACE_V2', 'THING_V2', 'THING']:
+                                                content += ' [place '+', '.join(k+' '+repr(v) for k,v in att['embed_item']['place_v2'].items())+']'
+                                            case ['DYNAMITE_MESSAGE_METADATA']:
+                                                content += ' [upload_metadata '+repr(att['embed_item']['dynamite_message_metadata'])+']'
+                                            case _: raise Exception('unhandled attachment '+json.dumps(att,indent=4))
                                 case _: raise msg_k
                         return content
                     case 'HANGOUT_EVENT':
@@ -58,7 +65,7 @@ def parseData():
                     'id':   event['sender_id']['gaia_id']
                 },
                 'unixtime': int(event['timestamp'])/1000000,
-                **({'content':_} if (_:=get_readable_content(event)) != None else {})
+                'content': get_readable_content(event)
             })
 
         conversation['chatName'] = chatName(orig_conv, conversation['participants'])
@@ -94,4 +101,4 @@ if __name__ == '__main__':
             filename = hashlib.sha256(filename.encode('ascii')).hexdigest()+'.txt'
         with open(os.path.join(args.OUTPUT_DIRECTORY, filename), 'w') as outtext:
             for msg in chat['messages']:
-                outtext.write(datetime.datetime.fromtimestamp(msg['unixtime']).strftime('%Y-%m-%d %H:%M:%S')+' '+msg['sender']['name']+': '+msg.get('content','')+'\n')
+                outtext.write(datetime.datetime.fromtimestamp(msg['unixtime']).strftime('%Y-%m-%d %H:%M:%S')+' '+msg['sender']['name']+': '+msg['content']+'\n')
