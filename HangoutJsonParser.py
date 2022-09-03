@@ -38,7 +38,7 @@ def parseData():
                                 case _: raise msg_k
                         return content
                     case 'HANGOUT_EVENT':
-                        return None # TODO
+                        return event['event_type']+' '+event['hangout_event']['event_type']
                     case 'ADD_USER'|'REMOVE_USER':
                         return None # TODO
                     case 'GROUP_LINK_SHARING_MODIFICATION':
