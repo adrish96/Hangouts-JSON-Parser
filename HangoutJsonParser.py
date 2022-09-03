@@ -40,7 +40,12 @@ def parseData():
                     case 'HANGOUT_EVENT':
                         return event['event_type']+' '+event['hangout_event']['event_type']
                     case 'ADD_USER'|'REMOVE_USER':
-                        return None # TODO
+                        ret = (
+                            event['event_type']+' '+event['membership_change'].pop('type')+' '+event['membership_change'].pop('leave_reason')+' '+
+                            ' '.join(repr(getName(i, conversation['participants'])) for i in event['membership_change'].pop('participant_id'))
+                        )
+                        assert event['membership_change'] == {}
+                        return ret
                     case 'GROUP_LINK_SHARING_MODIFICATION':
                         return None # TODO
                     case 'RENAME_CONVERSATION':
